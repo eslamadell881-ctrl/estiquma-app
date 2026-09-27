@@ -5,32 +5,41 @@ from datetime import date
 import re
 
 # ==========================================
-# إعدادات الواجهة الفاتحة النظيفة (بدون لون أسود)
+# إعدادات الواجهة الروحية الإيمانية (Dark & Symmetrical UI)
 # ==========================================
-st.set_page_config(page_title="نظام استقامة - متابعة العبادات", page_icon="🌙", layout="wide")
+st.set_page_config(page_title="نظام استقامة - واحة الطاعات", page_icon="🕋", layout="wide")
 
 st.markdown("""
 <style>
-    .stApp { background-color: #f8fafc !important; color: #0f172a !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    h1, h2, h3, h4 { color: #1e3a8a !important; font-weight: 700 !important; }
-    p, label, span { color: #334155 !important; }
-    input, textarea, select { 
-        background-color: #ffffff !important; 
-        color: #0f172a !important; 
-        border: 1px solid #cbd5e1 !important; 
+    /* خلفية داكنة إيمانية هادئة ومريحة للعين */
+    .stApp { background-color: #0d1117 !important; color: #e6edf3 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* العناوين بلون ذهبي هادئ ورمادي نقي */
+    h1, h2, h3, h4 { color: #f0b429 !important; font-weight: 700 !important; }
+    p, label, span, .stMarkdown { color: #c9d1d9 !important; }
+    
+    /* الحقول والمربعات بتصميم متناسق داكن وفاتح الحواف */
+    input, textarea, select, div[data-baseweb="select"] > div { 
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 1px solid #30363d !important; 
         border-radius: 8px !important; 
     }
+    
+    /* أزرار متميزة تناسب أجواء الطاعة */
     .stButton>button { 
-        background-color: #16a34a !important; 
+        background-color: #238636 !important; 
         color: #ffffff !important; 
         border-radius: 8px !important; 
         border: none !important; 
         font-weight: bold !important; 
         padding: 10px 24px; 
     }
-    .stButton>button:hover { background-color: #15803d !important; }
-    [data-testid="stSidebar"] { background-color: #f1f5f9 !important; border-right: 1px solid #e2e8f0; }
-    hr { border-color: #cbd5e1 !important; }
+    .stButton>button:hover { background-color: #2ea043 !important; }
+    
+    [data-testid="stSidebar"] { background-color: #161b22 !important; border-right: 1px solid #30363d; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label { color: #e6edf3 !important; }
+    hr { border-color: #30363d !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,13 +61,13 @@ if "logged_in" not in st.session_state:
     st.session_state.user_name = None
 
 # ==========================================
-# نظام الدخول والتسجيل
+# شاشة الدخول والتسجيل
 # ==========================================
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown("<h1 style='text-align: center; margin-top: 30px;'>🌙 نظام استقامة</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b;'>رفيقك اليومي لتتبع العبادات ومحاسبة النفس</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; margin-top: 30px;'>🕋 نظام استقامة</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #8b949e;'>\"وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا\"</p>", unsafe_allow_html=True)
         
         mode = st.radio("اختر العملية", ["تسجيل الدخول", "إنشاء حساب جديد"], horizontal=True)
         
@@ -66,7 +75,7 @@ if not st.session_state.logged_in:
             with st.form("login_form"):
                 mobile = st.text_input("رقم الموبايل")
                 password = st.text_input("كلمة المرور", type="password")
-                submit_login = st.form_submit_button("دخول", use_container_width=True)
+                submit_login = st.form_submit_button("دخول إلى واحة الطاعات", use_container_width=True)
                 
                 if submit_login:
                     try:
@@ -83,7 +92,7 @@ if not st.session_state.logged_in:
                         st.error(f"خطأ: {err}")
         else:
             with st.form("reg_form"):
-                name = st.text_input("الاسم الكامل")
+                name = st.text_input("الاسم الكريم")
                 mobile = st.text_input("رقم الموبايل")
                 password = st.text_input("كلمة المرور (8 أحرف على الأقل، وتحوي حروفاً وأرقاماً)", type="password")
                 submit_reg = st.form_submit_button("تسجيل حساب جديد", use_container_width=True)
@@ -112,19 +121,21 @@ user_name = st.session_state.user_name
 user_id = st.session_state.user_id
 
 with st.sidebar:
-    st.markdown(f"### 🌙 أهلاً بك")
-    st.markdown(f"**ازيك يا {user_name}** 😊")
+    st.markdown("### 🌙 رفيق الدرب")
+    st.markdown(f"**أهلاً بك يا {user_name}** 🤲")
+    st.markdown("---")
+    st.markdown("✨ *\"إن الله يحب إذا عمل أحدكم عملاً أن يتقنه\"*")
     st.markdown("---")
     if st.button("🚪 تسجيل الخروج", use_container_width=True):
         st.session_state.logged_in = False
         st.rerun()
 
-st.markdown(f"<h1>🌙 لوحة متابعة العبادات - ازيك يا {user_name}</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #64748b;'>سجل وردك اليومي ومحاسبتك بدقة. الأيام الفائتة مقفلة للأرشفة فقط.</p>", unsafe_allow_html=True)
+st.markdown(f"<h1>🕋 لوحة محاسبة النفس والطاعات - ازيك يا {user_name}</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #8b949e;'>تتبع وردك اليومي ونقاط طاعتك. الأيام الفائتة مقفلة للأرشفة والمحاسبة.</p>", unsafe_allow_html=True)
 
 today = date.today()
 
-tab_today, tab_history = st.tabs(["📅 ورد اليوم الحالي (متاح للتسجيل)", "📈 الأرشيف والسجل السابق (عرض فقط)"])
+tab_today, tab_history = st.tabs(["📅 ورد اليوم الحالي ومحاسبة النفس", "📈 الأرشيف والسجل السابق (عرض فقط)"])
 
 prayer_options = [
     'لم تُسجل',
@@ -134,7 +145,7 @@ prayer_options = [
     'فائتة / لم تُصلى (0 نقاط)'
 ]
 
-def calculate_prayer_score(status_str):
+def get_prayer_score(status_str):
     if 'المسجد' in status_str:
         return 3
     elif 'أول الأذان' in status_str or 'آخر الوقت' in status_str:
@@ -151,7 +162,7 @@ with tab_today:
         log_data = None
 
     with st.form("daily_worship_form"):
-        st.markdown("#### 🕌 نظام تقييم الصلوات الخمس")
+        st.markdown("#### 🕌 الصلوات الخمس ونقاطها")
         
         def get_index(val):
             try:
@@ -166,40 +177,58 @@ with tab_today:
         p_isha = st.selectbox("صلاة العشاء", prayer_options, index=get_index(log_data['isha_status']) if log_data else 0)
         
         st.markdown("---")
-        st.markdown("#### 📖 الورد القرآني المنظم")
-        col_h1, col_h2 = st.columns(2)
-        hifz_j = col_h1.number_input("ورد الحفظ - رقم الجزء", min_value=1, max_value=30, value=log_data['hifz_juz'] if log_data else 1)
-        hifz_p = col_h2.number_input("ورد الحفظ - رقم الصفحة", min_value=1, max_value=604, value=log_data['hifz_page'] if log_data else 1)
+        st.markdown("#### 📖 الورد القرآني (الحفظ والقراءة)")
+        h_done = st.checkbox("📖 هل أتممت ورد حفظ اليوم؟", value=log_data['hifz_done'] if log_data else False)
         
-        col_r1, col_r2 = st.columns(2)
-        read_from = col_r1.number_input("ورد القراءة - من صفحة", min_value=1, max_value=604, value=log_data['read_from_page'] if log_data else 1)
-        read_to = col_r2.number_input("ورد القراءة - إلى صفحة", min_value=1, max_value=604, value=log_data['read_to_page'] if log_data else 1)
+        col_h1, col_h2 = st.columns(2)
+        hifz_j = col_h1.number_input("رقم الجزء المحفوظ", min_value=1, max_value=30, value=log_data['hifz_juz'] if log_data else 1)
+        hifz_p = col_h2.number_input("رقم الصفحة المحفوظة", min_value=1, max_value=604, value=log_data['hifz_page'] if log_data else 1)
+        
+        read_pages = st.number_input("📚 عدد صفحات ورد القراءة اليومية (كل صفحة = نقطة)", min_value=0, max_value=100, value=log_data['read_pages_count'] if log_data else 0)
         
         st.markdown("---")
-        st.markdown("#### 📿 الأذكار والقيام")
+        st.markdown("#### 📿 الأذكار والقيام (كل طاعة بـ 5 نقاط)")
         c_a1, c_a2 = st.columns(2)
-        adhkar_s = c_a1.checkbox("أذكار الصباح والمساء", value=log_data['adhkar_sabah_masaa'] if log_data else False)
-        adhkar_p = c_a2.checkbox("أذكار بعد الصلاة", value=log_data['adhkar_after_prayer'] if log_data else False)
+        adhkar_s = c_a1.checkbox("☀️ أذكار الصباح والمساء (+5 نقاط)", value=log_data['adhkar_sabah_masaa'] if log_data else False)
+        adhkar_p = c_a2.checkbox("🕌 أذكار بعد الصلوات (+5 نقاط)", value=log_data['adhkar_after_prayer'] if log_data else False)
         
         c_a3, c_a4 = st.columns(2)
-        adhkar_sl = c_a3.checkbox("أذكار النوم", value=log_data['adhkar_sleep'] if log_data else False)
-        qiyam = c_a4.checkbox("قيام الليل", value=log_data['qiyam_al_layl'] if log_data else False)
+        adhkar_sl = c_a3.checkbox("🌙 أذكار النوم (+5 نقاط)", value=log_data['adhkar_sleep'] if log_data else False)
+        qiyam = c_a4.checkbox("⭐ قيام الليل (+5 نقاط)", value=log_data['qiyam_al_layl'] if log_data else False)
         
         st.markdown("---")
         st.markdown("#### 🛡️ محاسبة النفس والجهاد (الشهوات والتوبة)")
-        had_desire = st.checkbox("⚠️ هل حدث ضعف أو وقوع في شهوة اليوم؟", value=log_data['had_desire_struggle'] if log_data else False)
-        returned = st.checkbox("🤲 هل تبت ورجعت إلى الله سريعاً؟", value=log_data['returned_to_allah'] if log_data else False)
-        tawba_txt = st.text_area("خواطر تزكية النفس وملاحظات اليوم", value=log_data['tawba_notes'] if log_data else "")
+        st.markdown("<p style='color: #f0b429; font-size: 13px;'>⚠️ الوقوع في شهوة وضعف النفس (-50 نقطة) | 🤲 المسارعة بالتوبة والرجوع (+100 نقطة)</p>", unsafe_allow_html=True)
         
-        submit_log = st.form_submit_button("💾 حفظ ورد اليوم ومحاسبة النفس", use_container_width=True)
+        had_desire = st.checkbox("⚠️ هل حدث ضعف أو وقوع في شهوة اليوم؟ (-50 نقطة)", value=log_data['had_desire_struggle'] if log_data else False)
+        returned = st.checkbox("🤲 هل تبت ورجعت إلى الله سريعاً؟ (+100 نقطة)", value=log_data['returned_to_allah'] if log_data else False)
+        tawba_txt = st.text_area("خواطر وتزكية النفس اليومية", value=log_data['tawba_notes'] if log_data else "")
+        
+        submit_log = st.form_submit_button("💾 حفظ ورد اليوم وحساب النقاط الإيمانية", use_container_width=True)
         
         if submit_log:
             try:
-                total_pts = (calculate_prayer_score(p_fajr) + 
-                             calculate_prayer_score(p_dhuhr) + 
-                             calculate_prayer_score(p_asr) + 
-                             calculate_prayer_score(p_maghrib) + 
-                             calculate_prayer_score(p_isha))
+                # حساب نقاط الصلوات
+                p_pts = (get_prayer_score(p_fajr) + get_prayer_score(p_dhuhr) + 
+                         get_prayer_score(p_asr) + get_prayer_score(p_maghrib) + 
+                         get_prayer_score(p_isha))
+                
+                # نقاط القراءة (كل صفحة بنقطة)
+                r_pts = int(read_pages)
+                
+                # نقاط الأذكار والقيام (كل واحدة بـ 5)
+                adhkar_pts = 0
+                if adhkar_s: adhkar_pts += 5
+                if adhkar_p: adhkar_pts += 5
+                if adhkar_sl: adhkar_pts += 5
+                if qiyam: adhkar_pts += 5
+                
+                # نقاط الجهاد والتوبة
+                struggle_pts = 0
+                if had_desire: struggle_pts -= 50
+                if returned: struggle_pts += 100
+                
+                total_pts = p_pts + r_pts + adhkar_pts + struggle_pts
                 
                 payload = {
                     'user_id': user_id,
@@ -209,31 +238,35 @@ with tab_today:
                     'asr_status': p_asr,
                     'maghrib_status': p_maghrib,
                     'isha_status': p_isha,
-                    'total_prayer_points': total_pts,
+                    'prayer_points': p_pts,
+                    'hifz_done': h_done,
                     'hifz_juz': hifz_j,
                     'hifz_page': hifz_p,
-                    'read_from_page': read_from,
-                    'read_to_page': read_to,
+                    'read_pages_count': read_pages,
+                    'read_points': r_pts,
                     'adhkar_sabah_masaa': adhkar_s,
                     'adhkar_after_prayer': adhkar_p,
                     'adhkar_sleep': adhkar_sl,
                     'qiyam_al_layl': qiyam,
+                    'adhkar_qiyam_points': adhkar_pts,
                     'had_desire_struggle': had_desire,
                     'returned_to_allah': returned,
+                    'struggle_points': struggle_pts,
+                    'total_daily_points': total_pts,
                     'tawba_notes': tawba_txt
                 }
                 
                 if log_data:
                     supabase.table('istiqama_logs').update(payload).eq('id', log_data['id']).execute()
-                    st.success(f"✅ تم تحديث ورد اليوم بنجاح! مجموع نقاط الصلوات: {total_pts} نقطة.")
+                    st.success(f"✅ تم تحديث ورد اليوم! إجمالي نقاطك الإيمانية اليوم: {total_pts} نقطة.")
                 else:
                     supabase.table('istiqama_logs').insert(payload).execute()
-                    st.success(f"🎉 تقبل الله طاعاتك! تم حفظ السجل. مجموع نقاط الصلوات: {total_pts} نقطة.")
+                    st.success(f"🎉 تقبل الله طاعاتك وجاهد نفسك! إجمالي نقاطك اليوم: {total_pts} نقطة.")
             except Exception as e:
                 st.error(f"حدث خطأ أثناء الحفظ: {e}")
 
 with tab_history:
-    st.markdown("### 📊 الأرشيف والسجل السابق (مقفل - عرض فقط)")
+    st.markdown("### 📊 الأرشيف والسجل الروحي السابق (مقفل - عرض فقط)")
     try:
         history_res = supabase.table('istiqama_logs').select('*').eq('user_id', user_id).order('log_date', desc=True).execute()
         if history_res.data:
