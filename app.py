@@ -2,12 +2,14 @@ import streamlit as st
 from supabase import create_client
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from datetime import date
 import re
+import hashlib
+import os
+import binascii
 
 # ==========================================
-# 1. إعدادات الصفحة والواجهة الروحية الهادئة (Dark & Immersive UI)
+# 1. إعدادات الصفحة والواجهة الروحية المحترفة
 # ==========================================
 st.set_page_config(page_title="نظام استقامة - واحة الطاعات والإيمان", page_icon="🕋", layout="wide")
 
@@ -17,7 +19,6 @@ st.markdown("""
     h1, h2, h3, h4 { color: #f0b429 !important; font-weight: 700 !important; }
     p, label, span, .stMarkdown { color: #c9d1d9 !important; }
     
-    /* تصميم حواف الأجزاء (Cards with borders & subtle background) */
     .spiritual-card {
         background-color: #161b22 !important;
         border: 1px solid #30363d !important;
@@ -50,6 +51,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# 2. دوال تشفير والتحقق من كلمات المرور (أمان عالي)
+# ==========================================
+def hash_password(password):
+    salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
+    pwdhash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return binascii.hexlify(salt).decode('ascii') + ':' + binascii.hexlify(pwdhash).decode('ascii')
+
+def verify_password(stored_password, provided_password):
+    try:
+        salt_str, stored_pwdhash = stored_password.split(':')
+        salt = binascii.unhexlify(salt_str.encode('ascii'))
+        pwdhash = hashlib.pbkdf2_hmac('sha256', provided_password.encode('utf-8'), salt, 100000)
+        return stored_pwdhash == binascii.hexlify(pwdhash).decode('ascii')
+    except:
+        return False
+
 @st.cache_resource
 def init_connection():
     url = st.secrets["SUPABASE_URL"]
@@ -68,7 +86,7 @@ if "logged_in" not in st.session_state:
     st.session_state.user_name = None
 
 # ==========================================
-# 2. شاشة الدخول والتسجيل
+# 3. شاشة الدخول والتسجيل الآمنة
 # ==========================================
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
@@ -85,23 +103,29 @@ if not st.session_state.logged_in:
                 submit_login = st.form_submit_button("دخول إلى واحة الطاعات", use_container_width=True)
                 
                 if submit_login:
-                    try:
-                        res = supabase.table('istiqama_users').select('*').eq('mobile', mobile).eq('password', password).execute()
-                        if res.data:
-                            user = res.data[0]
-                            st.session_state.logged_in = True
-                            st.session_state.user_id = user['id']
-                            st.session_state.user_name = user['name']
-                            st.rerun()
-                        else:
-                            st.error("رقم الموبايل أو كلمة المرور غير صحيحة.")
-                    except Exception as err:
-                        st.error(f"خطأ: {err}")
+                    if not mobile or not password:
+                        st.warning("يرجى إدخال رقم الموبايل وكلمة المرور.")
+                    else:
+                        try:
+                            res = supabase.table('istiqama_users').select('*').eq('mobile', mobile).execute()
+                            if res.data:
+                                user = res.data[0]
+                                if verify_password(user['password'], password):
+                                    st.session_state.logged_in = True
+                                    st.session_state.user_id = user['id']
+                                    st.session_state.user_name = user['name']
+                                    st.rerun()
+                                else:
+                                    st.error("رقم الموبايل أو كلمة المرور غير صحيحة.")
+                            else:
+                                st.error("رقم الموبايل غير مسجل.")
+                        except Exception as err:
+                            st.error(f"حدث خطأ في النظام: {err}")
         else:
             with st.form("reg_form"):
                 name = st.text_input("الاسم الكريم")
                 mobile = st.text_input("رقم الموبايل")
-                password = st.text_input("كلمة المرور (8 أحرف على الأقل وتحوي أرقاماً وحروفاً)", type="password")
+                password = st.text_input("كلمة المرور (8 أحرف على الأقل، وتحوي حروفاً وأرقاماً)", type="password")
                 submit_reg = st.form_submit_button("تسجيل حساب جديد", use_container_width=True)
                 
                 if submit_reg:
@@ -111,18 +135,19 @@ if not st.session_state.logged_in:
                         st.warning("يرجى إدخال الاسم ورقم الموبايل.")
                     else:
                         try:
+                            hashed_pwd = hash_password(password)
                             supabase.table('istiqama_users').insert({
                                 'name': name,
                                 'mobile': mobile,
-                                'password': password
+                                'password': hashed_pwd
                             }).execute()
-                            st.success("✅ تم إنشاء الحساب بنجاح! انتقل لتبويب 'تسجيل الدخول'.")
+                            st.success("✅ تم إنشاء الحساب بنجاح وبأمان تام! انتقل لتبويب 'تسجيل الدخول'.")
                         except Exception as e:
-                            st.error("رقم الموبايل مسجل مسبقاً أو حدث خطأ.")
+                            st.error("رقم الموبايل مسجل مسبقاً.")
     st.stop()
 
 # ==========================================
-# 3. الواجهة الرئيسية بعد تسجيل الدخول
+# 4. الواجهة الرئيسية بعد تسجيل الدخول
 # ==========================================
 user_name = st.session_state.user_name
 user_id = st.session_state.user_id
@@ -138,7 +163,7 @@ with st.sidebar:
         st.rerun()
 
 st.markdown(f"<h1>🕋 لوحة محاسبة النفس والطاعات - ازيك يا {user_name}</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #8b949e;'>سجل وردك اليومي ومحاسبتك بإخلاص. الأيام الفائتة مقفلة للأرشفة والمحاسبة.</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #8b949e;'>سجل وردك اليومي ومحاسبتك بإخلاص وتجرد. الأيام الفائتة مقفلة للأرشفة والمحاسبة.</p>", unsafe_allow_html=True)
 
 today = date.today()
 
@@ -169,7 +194,7 @@ with tab_today:
         log_data = None
 
     with st.form("daily_worship_form"):
-        # الجزء الأول: الصلوات
+        # 1. الصلوات
         st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 🕌 الصلوات الخمس")
         def get_index(val):
@@ -183,7 +208,7 @@ with tab_today:
         p_isha = st.selectbox("صلاة العشاء", prayer_options, index=get_index(log_data['isha_status']) if log_data else 0)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # الجزء الثاني: القرآن
+        # 2. القرآن
         st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 📖 الورد القرآني (الحفظ والقراءة)")
         h_done = st.checkbox("📖 هل أتممت ورد حفظ اليوم؟", value=log_data['hifz_done'] if log_data else False)
@@ -195,7 +220,7 @@ with tab_today:
         read_pages = st.number_input("📚 عدد صفحات ورد القراءة اليومية (كل صفحة بنقطة)", min_value=0, max_value=100, value=log_data['read_pages_count'] if log_data else 0)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # الجزء الثالث: الأذكار والقيام
+        # 3. الأذكار والقيام
         st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 📿 الأذكار والقيام")
         c_a1, c_a2 = st.columns(2)
@@ -207,7 +232,7 @@ with tab_today:
         qiyam = c_a4.checkbox("⭐ قيام الليل", value=log_data['qiyam_al_layl'] if log_data else False)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # الجزء الرابع: محاسبة النفس
+        # 4. محاسبة النفس
         st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 🛡️ محاسبة النفس والجهاد (الشهوات والتوبة)")
         st.markdown("<p style='color: #f0b429; font-size: 13px;'>الصدق مع النفس هو أساس الترقي الروحي.</p>", unsafe_allow_html=True)
@@ -275,22 +300,19 @@ with tab_today:
 
 with tab_history:
     st.markdown("### 📊 الأرشيف والرسوم البيانية الروحية (مقفل ومحفوظ للأرشفة)")
-    st.markdown("<p style='color: #8b949e;'>تأمل مسيرتك الإيمانية عبر الرسوم البيانية الدائرية وشريطية الأداء دون الالتفات للأرقام الحرفية، بل لروح الاستمرارية والتقرب.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #8b949e;'>تأمل مسيرتك الإيمانية عبر الرسوم البيانية الدائرية وشريطية الأداء دون الالتفات للأرقام الحرفية.</p>", unsafe_allow_html=True)
     
     try:
+        # جلب سجلات المستخدم الحالي فقط (عزل تام للبيانات)
         history_res = supabase.table('istiqama_logs').select('*').eq('user_id', user_id).order('log_date', desc=True).execute()
         if history_res.data:
             df_hist = pd.DataFrame(history_res.data)
             
-            # قسم الرسوم البيانية المتطورة (دايرة وجرافات بشرح وحواف)
             c_g1, c_g2 = st.columns(2)
             
             with c_g1:
                 st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
-                st.markdown("#### 🥧 تو توزيع الطاعات والأنشطة الإيمانية")
-                st.markdown("<p style='font-size: 13px; color: #8b949e;'>هذا الرسم الدائري يوضح نسب اهتمامك بالعبادات المختلفة (صلوات، أذكار، قراءة قرآن).</p>", unsafe_allow_html=True)
-                
-                # تجميع البيانات للرسم الدائري
+                st.markdown("#### 🥧 توزيع الطاعات والأنشطة الإيمانية")
                 sum_prayers = df_hist['prayer_points'].sum()
                 sum_quran = df_hist['read_points'].sum()
                 sum_adhkar = df_hist['adhkar_qiyam_points'].sum()
@@ -307,21 +329,18 @@ with tab_history:
                 
             with c_g2:
                 st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
-                st.markdown("#### 📈 مؤشر الاستمرارية والالتزام اليومي")
-                st.markdown("<p style='font-size: 13px; color: #8b949e;'>تطور حضورك الروحي ومقدار مواظبتك يوماً بيوم.</p>", unsafe_allow_html=True)
-                
+                st.markdown("#### 📈 مؤشر الالتزام والاستمرارية الروحي")
                 fig_line = px.line(df_hist, x='log_date', y='total_daily_points', markers=True, line_shape='spline', color_discrete_sequence=['#f0b429'])
                 fig_line.update_layout(paper_bgcolor='#161b22', plot_bgcolor='#161b22', font_color='#e6edf3', margin=dict(t=10, b=10, l=10, r=10))
                 st.plotly_chart(fig_line, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
             
-            # جدول الأرشيف النظيف (بدون إظهار الأرقام الحرفية المعقدة في الوجه، عرض للأرشفة)
             st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
             st.markdown("#### 🗂️ سجل الأيام السابقة (أرشيف الطاعات والتوبة)")
             st.dataframe(df_hist[['log_date', 'fajr_status', 'dhuhr_status', 'asr_status', 'maghrib_status', 'isha_status', 'hifz_done', 'read_pages_count', 'tawba_notes']], use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
         else:
-            st.info("لا توجد سجلات سابقة في الأرشيف حتى الآن. ابدأ بتسجيل طاعات اليوم لتزدهر صحيفة أعمالك.")
+            st.info("لا توجد سجلات سابقة في الأرشيف حتى الآن. ابدأ بتسجيل طاعات اليوم.")
     except Exception as ex:
         st.error(f"خطأ في جلب الأرشيف والرسوم البيانية: {ex}")
