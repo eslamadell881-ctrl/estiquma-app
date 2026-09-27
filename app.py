@@ -1,32 +1,39 @@
 import streamlit as st
 from supabase import create_client
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from datetime import date
 import re
 
 # ==========================================
-# إعدادات الواجهة الروحية الإيمانية (Dark & Symmetrical UI)
+# 1. إعدادات الصفحة والواجهة الروحية الهادئة (Dark & Immersive UI)
 # ==========================================
-st.set_page_config(page_title="نظام استقامة - واحة الطاعات", page_icon="🕋", layout="wide")
+st.set_page_config(page_title="نظام استقامة - واحة الطاعات والإيمان", page_icon="🕋", layout="wide")
 
 st.markdown("""
 <style>
-    /* خلفية داكنة إيمانية هادئة ومريحة للعين */
     .stApp { background-color: #0d1117 !important; color: #e6edf3 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
-    /* العناوين بلون ذهبي هادئ ورمادي نقي */
     h1, h2, h3, h4 { color: #f0b429 !important; font-weight: 700 !important; }
     p, label, span, .stMarkdown { color: #c9d1d9 !important; }
     
-    /* الحقول والمربعات بتصميم متناسق داكن وفاتح الحواف */
+    /* تصميم حواف الأجزاء (Cards with borders & subtle background) */
+    .spiritual-card {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
     input, textarea, select, div[data-baseweb="select"] > div { 
-        background-color: #161b22 !important; 
+        background-color: #0d1117 !important; 
         color: #e6edf3 !important; 
         border: 1px solid #30363d !important; 
         border-radius: 8px !important; 
     }
     
-    /* أزرار متميزة تناسب أجواء الطاعة */
     .stButton>button { 
         background-color: #238636 !important; 
         color: #ffffff !important; 
@@ -61,7 +68,7 @@ if "logged_in" not in st.session_state:
     st.session_state.user_name = None
 
 # ==========================================
-# شاشة الدخول والتسجيل
+# 2. شاشة الدخول والتسجيل
 # ==========================================
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1.5, 1])
@@ -94,7 +101,7 @@ if not st.session_state.logged_in:
             with st.form("reg_form"):
                 name = st.text_input("الاسم الكريم")
                 mobile = st.text_input("رقم الموبايل")
-                password = st.text_input("كلمة المرور (8 أحرف على الأقل، وتحوي حروفاً وأرقاماً)", type="password")
+                password = st.text_input("كلمة المرور (8 أحرف على الأقل وتحوي أرقاماً وحروفاً)", type="password")
                 submit_reg = st.form_submit_button("تسجيل حساب جديد", use_container_width=True)
                 
                 if submit_reg:
@@ -115,7 +122,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ==========================================
-# الواجهة الرئيسية بعد تسجيل الدخول
+# 3. الواجهة الرئيسية بعد تسجيل الدخول
 # ==========================================
 user_name = st.session_state.user_name
 user_id = st.session_state.user_id
@@ -131,11 +138,11 @@ with st.sidebar:
         st.rerun()
 
 st.markdown(f"<h1>🕋 لوحة محاسبة النفس والطاعات - ازيك يا {user_name}</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #8b949e;'>تتبع وردك اليومي ونقاط طاعتك. الأيام الفائتة مقفلة للأرشفة والمحاسبة.</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #8b949e;'>سجل وردك اليومي ومحاسبتك بإخلاص. الأيام الفائتة مقفلة للأرشفة والمحاسبة.</p>", unsafe_allow_html=True)
 
 today = date.today()
 
-tab_today, tab_history = st.tabs(["📅 ورد اليوم الحالي ومحاسبة النفس", "📈 الأرشيف والسجل السابق (عرض فقط)"])
+tab_today, tab_history = st.tabs(["📅 ورد اليوم الحالي ومحاسبة النفس", "📈 الأرشيف والرسوم البيانية الروحية"])
 
 prayer_options = [
     'لم تُسجل',
@@ -162,21 +169,22 @@ with tab_today:
         log_data = None
 
     with st.form("daily_worship_form"):
-        st.markdown("#### 🕌 الصلوات الخمس ونقاطها")
-        
+        # الجزء الأول: الصلوات
+        st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
+        st.markdown("#### 🕌 الصلوات الخمس")
         def get_index(val):
-            try:
-                return prayer_options.index(val)
-            except:
-                return 0
+            try: return prayer_options.index(val)
+            except: return 0
 
         p_fajr = st.selectbox("صلاة الفجر", prayer_options, index=get_index(log_data['fajr_status']) if log_data else 0)
         p_dhuhr = st.selectbox("صلاة الظهر", prayer_options, index=get_index(log_data['dhuhr_status']) if log_data else 0)
         p_asr = st.selectbox("صلاة العصر", prayer_options, index=get_index(log_data['asr_status']) if log_data else 0)
         p_maghrib = st.selectbox("صلاة المغرب", prayer_options, index=get_index(log_data['maghrib_status']) if log_data else 0)
         p_isha = st.selectbox("صلاة العشاء", prayer_options, index=get_index(log_data['isha_status']) if log_data else 0)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("---")
+        # الجزء الثاني: القرآن
+        st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 📖 الورد القرآني (الحفظ والقراءة)")
         h_done = st.checkbox("📖 هل أتممت ورد حفظ اليوم؟", value=log_data['hifz_done'] if log_data else False)
         
@@ -184,46 +192,46 @@ with tab_today:
         hifz_j = col_h1.number_input("رقم الجزء المحفوظ", min_value=1, max_value=30, value=log_data['hifz_juz'] if log_data else 1)
         hifz_p = col_h2.number_input("رقم الصفحة المحفوظة", min_value=1, max_value=604, value=log_data['hifz_page'] if log_data else 1)
         
-        read_pages = st.number_input("📚 عدد صفحات ورد القراءة اليومية (كل صفحة = نقطة)", min_value=0, max_value=100, value=log_data['read_pages_count'] if log_data else 0)
+        read_pages = st.number_input("📚 عدد صفحات ورد القراءة اليومية (كل صفحة بنقطة)", min_value=0, max_value=100, value=log_data['read_pages_count'] if log_data else 0)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.markdown("#### 📿 الأذكار والقيام (كل طاعة بـ 5 نقاط)")
+        # الجزء الثالث: الأذكار والقيام
+        st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
+        st.markdown("#### 📿 الأذكار والقيام")
         c_a1, c_a2 = st.columns(2)
-        adhkar_s = c_a1.checkbox("☀️ أذكار الصباح والمساء (+5 نقاط)", value=log_data['adhkar_sabah_masaa'] if log_data else False)
-        adhkar_p = c_a2.checkbox("🕌 أذكار بعد الصلوات (+5 نقاط)", value=log_data['adhkar_after_prayer'] if log_data else False)
+        adhkar_s = c_a1.checkbox("☀️ أذكار الصباح والمساء", value=log_data['adhkar_sabah_masaa'] if log_data else False)
+        adhkar_p = c_a2.checkbox("🕌 أذكار بعد الصلوات", value=log_data['adhkar_after_prayer'] if log_data else False)
         
         c_a3, c_a4 = st.columns(2)
-        adhkar_sl = c_a3.checkbox("🌙 أذكار النوم (+5 نقاط)", value=log_data['adhkar_sleep'] if log_data else False)
-        qiyam = c_a4.checkbox("⭐ قيام الليل (+5 نقاط)", value=log_data['qiyam_al_layl'] if log_data else False)
+        adhkar_sl = c_a3.checkbox("🌙 أذكار النوم", value=log_data['adhkar_sleep'] if log_data else False)
+        qiyam = c_a4.checkbox("⭐ قيام الليل", value=log_data['qiyam_al_layl'] if log_data else False)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("---")
+        # الجزء الرابع: محاسبة النفس
+        st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
         st.markdown("#### 🛡️ محاسبة النفس والجهاد (الشهوات والتوبة)")
-        st.markdown("<p style='color: #f0b429; font-size: 13px;'>⚠️ الوقوع في شهوة وضعف النفس (-50 نقطة) | 🤲 المسارعة بالتوبة والرجوع (+100 نقطة)</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #f0b429; font-size: 13px;'>الصدق مع النفس هو أساس الترقي الروحي.</p>", unsafe_allow_html=True)
         
-        had_desire = st.checkbox("⚠️ هل حدث ضعف أو وقوع في شهوة اليوم؟ (-50 نقطة)", value=log_data['had_desire_struggle'] if log_data else False)
-        returned = st.checkbox("🤲 هل تبت ورجعت إلى الله سريعاً؟ (+100 نقطة)", value=log_data['returned_to_allah'] if log_data else False)
+        had_desire = st.checkbox("⚠️ هل حدث ضعف أو وقوع في شهوة اليوم؟", value=log_data['had_desire_struggle'] if log_data else False)
+        returned = st.checkbox("🤲 هل تبت ورجعت إلى الله سريعاً؟", value=log_data['returned_to_allah'] if log_data else False)
         tawba_txt = st.text_area("خواطر وتزكية النفس اليومية", value=log_data['tawba_notes'] if log_data else "")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        submit_log = st.form_submit_button("💾 حفظ ورد اليوم وحساب النقاط الإيمانية", use_container_width=True)
+        submit_log = st.form_submit_button("💾 حفظ ورد اليوم في سجل الطاعات", use_container_width=True)
         
         if submit_log:
             try:
-                # حساب نقاط الصلوات
                 p_pts = (get_prayer_score(p_fajr) + get_prayer_score(p_dhuhr) + 
                          get_prayer_score(p_asr) + get_prayer_score(p_maghrib) + 
                          get_prayer_score(p_isha))
-                
-                # نقاط القراءة (كل صفحة بنقطة)
                 r_pts = int(read_pages)
                 
-                # نقاط الأذكار والقيام (كل واحدة بـ 5)
                 adhkar_pts = 0
                 if adhkar_s: adhkar_pts += 5
                 if adhkar_p: adhkar_pts += 5
                 if adhkar_sl: adhkar_pts += 5
                 if qiyam: adhkar_pts += 5
                 
-                # نقاط الجهاد والتوبة
                 struggle_pts = 0
                 if had_desire: struggle_pts -= 50
                 if returned: struggle_pts += 100
@@ -258,21 +266,62 @@ with tab_today:
                 
                 if log_data:
                     supabase.table('istiqama_logs').update(payload).eq('id', log_data['id']).execute()
-                    st.success(f"✅ تم تحديث ورد اليوم! إجمالي نقاطك الإيمانية اليوم: {total_pts} نقطة.")
+                    st.success("✅ تم تحديث ورد اليوم بنجاح في صحيفة أعمالك.")
                 else:
                     supabase.table('istiqama_logs').insert(payload).execute()
-                    st.success(f"🎉 تقبل الله طاعاتك وجاهد نفسك! إجمالي نقاطك اليوم: {total_pts} نقطة.")
+                    st.success("🎉 تقبل الله طاعاتك وجاهد نفسك! تم حفظ السجل بنجاح.")
             except Exception as e:
                 st.error(f"حدث خطأ أثناء الحفظ: {e}")
 
 with tab_history:
-    st.markdown("### 📊 الأرشيف والسجل الروحي السابق (مقفل - عرض فقط)")
+    st.markdown("### 📊 الأرشيف والرسوم البيانية الروحية (مقفل ومحفوظ للأرشفة)")
+    st.markdown("<p style='color: #8b949e;'>تأمل مسيرتك الإيمانية عبر الرسوم البيانية الدائرية وشريطية الأداء دون الالتفات للأرقام الحرفية، بل لروح الاستمرارية والتقرب.</p>", unsafe_allow_html=True)
+    
     try:
         history_res = supabase.table('istiqama_logs').select('*').eq('user_id', user_id).order('log_date', desc=True).execute()
         if history_res.data:
             df_hist = pd.DataFrame(history_res.data)
-            st.dataframe(df_hist, use_container_width=True)
+            
+            # قسم الرسوم البيانية المتطورة (دايرة وجرافات بشرح وحواف)
+            c_g1, c_g2 = st.columns(2)
+            
+            with c_g1:
+                st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
+                st.markdown("#### 🥧 تو توزيع الطاعات والأنشطة الإيمانية")
+                st.markdown("<p style='font-size: 13px; color: #8b949e;'>هذا الرسم الدائري يوضح نسب اهتمامك بالعبادات المختلفة (صلوات، أذكار، قراءة قرآن).</p>", unsafe_allow_html=True)
+                
+                # تجميع البيانات للرسم الدائري
+                sum_prayers = df_hist['prayer_points'].sum()
+                sum_quran = df_hist['read_points'].sum()
+                sum_adhkar = df_hist['adhkar_qiyam_points'].sum()
+                
+                pie_df = pd.DataFrame({
+                    'العبادة': ['الصلوات', 'ورد القراءة', 'الأذكار والقيام'],
+                    'النسبة': [max(0, sum_prayers), max(0, sum_quran), max(0, sum_adhkar)]
+                })
+                
+                fig_pie = px.pie(pie_df, names='العبادة', values='النسبة', hole=0.4, color_discrete_sequence=['#238636', '#f0b429', '#1f6feb'])
+                fig_pie.update_layout(paper_bgcolor='#161b22', font_color='#e6edf3', margin=dict(t=10, b=10, l=10, r=10))
+                st.plotly_chart(fig_pie, use_container_width=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+            with c_g2:
+                st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
+                st.markdown("#### 📈 مؤشر الاستمرارية والالتزام اليومي")
+                st.markdown("<p style='font-size: 13px; color: #8b949e;'>تطور حضورك الروحي ومقدار مواظبتك يوماً بيوم.</p>", unsafe_allow_html=True)
+                
+                fig_line = px.line(df_hist, x='log_date', y='total_daily_points', markers=True, line_shape='spline', color_discrete_sequence=['#f0b429'])
+                fig_line.update_layout(paper_bgcolor='#161b22', plot_bgcolor='#161b22', font_color='#e6edf3', margin=dict(t=10, b=10, l=10, r=10))
+                st.plotly_chart(fig_line, use_container_width=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # جدول الأرشيف النظيف (بدون إظهار الأرقام الحرفية المعقدة في الوجه، عرض للأرشفة)
+            st.markdown('<div class="spiritual-card">', unsafe_allow_html=True)
+            st.markdown("#### 🗂️ سجل الأيام السابقة (أرشيف الطاعات والتوبة)")
+            st.dataframe(df_hist[['log_date', 'fajr_status', 'dhuhr_status', 'asr_status', 'maghrib_status', 'isha_status', 'hifz_done', 'read_pages_count', 'tawba_notes']], use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
         else:
-            st.info("لا توجد سجلات سابقة للأرشيف حتى الآن.")
+            st.info("لا توجد سجلات سابقة في الأرشيف حتى الآن. ابدأ بتسجيل طاعات اليوم لتزدهر صحيفة أعمالك.")
     except Exception as ex:
-        st.error(f"خطأ في جلب الأرشيف: {ex}")
+        st.error(f"خطأ في جلب الأرشيف والرسوم البيانية: {ex}")
