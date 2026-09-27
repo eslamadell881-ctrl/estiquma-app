@@ -16,7 +16,7 @@ def init_connection():
 try:
     supabase = init_connection()
 except Exception as e:
-    st.error("⚠️ لم يتم العثور على مفاتيح Supabase. يرجى إضافتها في Streamlit Secrets.")
+    st.error(f"تفاصيل الخطأ: {e}")
     st.stop()
 
 def save_log(data):
